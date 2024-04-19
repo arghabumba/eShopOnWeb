@@ -39,7 +39,7 @@ jobs:
     steps:
       - checkout: self
 
-      - script: dotnet test $(Build.SourcesDirectory)/test/UnitTests/UnitTests.csproj --configuration Release --no-build
+      - script: dotnet test tests/UnitTests/UnitTests.csproj --configuration Release --no-build
         displayName: 'Run unit tests'
 
 
