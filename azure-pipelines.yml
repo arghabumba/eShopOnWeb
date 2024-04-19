@@ -29,7 +29,7 @@ jobs:
     steps:
       - checkout: self
 
-      - script: ls -l eShopOnWeb/tests/UnitTests/
+      - script: ls -l tests/UnitTests/
         displayName: 'List contents of UnitTests directory'
 
   - job: BuildAndTest
