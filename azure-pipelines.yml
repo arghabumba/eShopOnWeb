@@ -39,8 +39,9 @@ jobs:
     steps:
       - checkout: self
 
-      - script: dotnet test /home/vsts/work/1/s/test/UnitTests/UnitTests.csproj --configuration Release --no-build
+      - script: dotnet test $(Build.SourcesDirectory)/test/UnitTests/UnitTests.csproj --configuration Release --no-build
         displayName: 'Run unit tests'
+
 
       - task: Docker@2
         inputs:
