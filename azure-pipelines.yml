@@ -1,54 +1,51 @@
 trigger:
   branches:
     include:
-    - main
+      - main
+
 pr:
   branches:
     exclude:
-    - '*'  
+      - '*'
 
 resources:
-- repo: self
+  repositories:
+    - repository: eShopOnWeb
+      type: github
+      endpoint: arghabumba
+      name: dotnet-architecture/eShopOnWeb
 
 variables:
-  dockerRegistryName: '$(azureContainerRegistry)'
   dockerRegistryServiceConnection: 'ACRSC'
+  dockerfilePath: '$(Build.SourcesDirectory)/src/Web/Dockerfile'
   repository: '$(imageRepository)'
-  dockerfilePath: $(Build.SourcesDirectory)/Dockerfile
   prefix: '$(tagPrefix)'
-  webApp: Webapptest0123
   tag: '$(prefix)-$(Build.BuildId)'
-  
 
+jobs:
+- job: Build
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - checkout: eShopOnWeb
+  - task: UseDotNet@2
+    inputs:
+      packageType: 'sdk'
+      version: '3.x'
+      installationPath: $(Agent.ToolsDirectory)/dotnet
 
+  - script: dotnet build $(Build.SourcesDirectory)/src/Web/Web.csproj --configuration Release
+    displayName: 'Build the .NET Core app'
 
-pool:
-  vmImage: 'ubuntu-latest'
+  - script: dotnet test $(Build.SourcesDirectory)/test/UnitTests/UnitTests.csproj --configuration Release --no-build
+    displayName: 'Run unit tests'
 
-steps:
-- task: UseDotNet@2
-  inputs:
-    packageType: 'sdk'
-    version: '3.x'
-    installationPath: $(Agent.ToolsDirectory)/dotnet
-
-- script: dotnet build --configuration Release
-  displayName: 'Build the .NET Core app'
-
-- script: dotnet test --configuration Release --no-build
-  displayName: 'Run unit tests'
-
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    artifactName: 'drop'
-    publishLocation: 'Container'
-
-- task: Docker@2
-  inputs:
-    containerRegistry: '$(dockerRegistryServiceConnection)'
-    repository: $(repository)
-    command: 'buildAndPush'
-    Dockerfile: '**/Dockerfile'
-    tags: 'latest'
-    buildContext: '$(Build.ArtifactStagingDirectory)'
+  - task: Docker@2
+    inputs:
+      containerRegistry: '$(dockerRegistryServiceConnection)'
+      repository: $(repository)
+      command: 'buildAndPush'
+      Dockerfile: $(dockerfilePath)
+      tags: |
+          $(tag)
+      buildContext: $(Build.SourcesDirectory)/src/Web
