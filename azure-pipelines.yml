@@ -39,9 +39,17 @@ jobs:
     steps:
       - checkout: self
 
+      - script: dotnet clean $(Build.SourcesDirectory)/path-to-your-project.csproj
+        displayName: 'Clean the project'
+
+      - script: dotnet restore $(Build.SourcesDirectory)/path-to-your-project.csproj
+        displayName: 'Restore the project'
+
+      - script: dotnet build $(Build.SourcesDirectory)/path-to-your-project.csproj --configuration Release
+        displayName: 'Build the project'
+
       - script: dotnet test tests/UnitTests/UnitTests.csproj --configuration Release --no-build
         displayName: 'Run unit tests'
-
 
       - task: Docker@2
         inputs:
