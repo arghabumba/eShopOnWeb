@@ -1,0 +1,54 @@
+trigger:
+  branches:
+    include:
+    - main
+pr:
+  branches:
+    exclude:
+    - '*'  
+
+resources:
+- repo: self
+
+variables:
+  dockerRegistryName: '$(azureContainerRegistry)'
+  dockerRegistryServiceConnection: 'ACRSC'
+  repository: '$(imageRepository)'
+  dockerfilePath: $(Build.SourcesDirectory)/Dockerfile
+  prefix: '$(tagPrefix)'
+  webApp: Webapptest0123
+  tag: '$(prefix)-$(Build.BuildId)'
+  
+
+
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '3.x'
+    installationPath: $(Agent.ToolsDirectory)/dotnet
+
+- script: dotnet build --configuration Release
+  displayName: 'Build the .NET Core app'
+
+- script: dotnet test --configuration Release --no-build
+  displayName: 'Run unit tests'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: 'drop'
+    publishLocation: 'Container'
+
+- task: Docker@2
+  inputs:
+    containerRegistry: '$(dockerRegistryServiceConnection)'
+    repository: $(repository)
+    command: 'buildAndPush'
+    Dockerfile: '**/Dockerfile'
+    tags: 'latest'
+    buildContext: '$(Build.ArtifactStagingDirectory)'
