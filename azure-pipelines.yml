@@ -29,7 +29,7 @@ jobs:
     steps:
       - checkout: self
 
-      - script: ls -l /home/vsts/work/1/s/test/UnitTests/
+      - script: ls -l eShopOnWeb/tests/UnitTests/
         displayName: 'List contents of UnitTests directory'
 
   - job: BuildAndTest
