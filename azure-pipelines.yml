@@ -23,29 +23,31 @@ variables:
   tag: '$(prefix)-$(Build.BuildId)'
 
 jobs:
-- job: Build
-  pool:
-    vmImage: 'ubuntu-latest'
-  steps:
-  - checkout: eShopOnWeb
-  - task: UseDotNet@2
-    inputs:
-      packageType: 'sdk'
-      version: '8.x'
-      installationPath: $(Agent.ToolsDirectory)/dotnet
+  - job: Debug
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+      - checkout: self
 
-  - script: dotnet build $(Build.SourcesDirectory)/src/Web/Web.csproj --configuration Release
-    displayName: 'Build the .NET Core app'
+      - script: ls -l /home/vsts/work/1/s/test/UnitTests/
+        displayName: 'List contents of UnitTests directory'
 
-  - script: dotnet test $(Build.SourcesDirectory)/test/UnitTests/UnitTests.csproj --configuration Release --no-build
-    displayName: 'Run unit tests'
+  - job: BuildAndTest
+    dependsOn: Debug
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+      - checkout: self
 
-  - task: Docker@2
-    inputs:
-      containerRegistry: '$(dockerRegistryServiceConnection)'
-      repository: $(repository)
-      command: 'buildAndPush'
-      Dockerfile: $(dockerfilePath)
-      tags: |
-          $(tag)
-      buildContext: $(Build.SourcesDirectory)/src/Web
+      - script: dotnet test /home/vsts/work/1/s/test/UnitTests/UnitTests.csproj --configuration Release --no-build
+        displayName: 'Run unit tests'
+
+      - task: Docker@2
+        inputs:
+          containerRegistry: '$(dockerRegistryServiceConnection)'
+          repository: $(repository)
+          command: 'buildAndPush'
+          Dockerfile: $(dockerfilePath)
+          tags: |
+            $(tag)
+          buildContext: $(Build.SourcesDirectory)/src/Web
